@@ -1,0 +1,185 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{amsmath}
+
+\usetheme[noto, showmaxslides]{pureminimalistic}
+\newcommand{\CourseCode}{MAS512}
+\renewcommand{\pageword}{Page}
+\renewcommand{\logoheader}{\vspace{1.5em}}
+
+\title[\CourseCode]{Assignment 1 -- Q2, Q4, Q6}
+\newcommand{\undertittel}{Object tracking, motor fault classification and autoencoders}
+\author{Richard Rumpelt \and Javier Comes Tello \and Tobias Brand}
+\institute{University of Agder}
+\date{\today}
+
+\graphicspath{{Figures/}}
+\newcommand{\fig}[2][]{\includegraphics[#1]{#2}}
+\newcommand{\good}[1]{\textbf{#1}}
+
+\begin{document}
+
+\makestartpage
+\maketitle
+
+\begin{frame}[plain, noframenumbering]{Outline}
+    \tableofcontents
+\end{frame}
+
+% =====================================================================================
+\section{Q2 -- Object Tracking}
+\makechapterpage{Q2 -- Object Tracking}{5 points}
+
+\begin{frame}{Objective \& Method}
+    \begin{itemize}
+        \item \good{Objective:} track the swinging load in \texttt{test\_swingingload.avi} and show its trajectory as it swings
+        \item \good{Method:}
+        \begin{itemize}
+            \item Detector: the YOLO model trained in Q1 (\texttt{best.pt})
+            \item \texttt{model.track(frame, persist=True)} on every frame -- keeps the same object identity across frames
+            \item Bounding-box center $(c_x, c_y)$ extracted for every frame the load is detected in
+            \item Plot all centers as a scatter of pixel coordinates $X$ vs.\ $Y$
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Result}
+    \centering
+    \fig[width=.62\linewidth]{q2_trajectory}
+    \vfill
+    {\small Load detected and tracked in \good{all 300} test-video frames -- the pendulum-like swing arc is clearly visible}
+\end{frame}
+
+% =====================================================================================
+\section{Q4 -- Classification}
+\makechapterpage{Q4 -- Classification}{10 points}
+
+\begin{frame}{Objective \& Data}
+    \begin{itemize}
+        \item \good{Objective:} determine motor state of health (healthy vs.\ faulty) and compare an own CNN against the baseline architecture given in class
+        \item \good{Data:} \texttt{fault-classification-class} -- vibration scalograms (laser vibrometer $\rightarrow$ wavelet transform), $60\times175\times3$ px
+        \item 180 measurements per class, each split into 5 time-window crops $\Rightarrow$ 900 images/class
+        \item Fixed 80/20 split by measurement number (1--144 train, 145--180 val) -- all crops of one measurement stay together, no data leakage
+    \end{itemize}
+    \centering
+    \small
+    \begin{tabular}{lccc}
+        \toprule
+        & Training & Validation & Test \\
+        \midrule
+        Images & 1440 & 360 & 200 \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\begin{frame}{Model 1 (own) vs.\ Model 2 (given baseline)}
+    \centering
+    \fig[width=.85\linewidth]{model_1_architecture}
+    \vfill
+    \begin{itemize}
+        \footnotesize
+        \item \good{Model 1 (custom, 27.9k params):} 3$\times$[Conv2D+MaxPool] (16$\to$32$\to$64), GlobalAveragePooling, Dense(64)
+        \item \good{Model 2 (given, 105k params):} 5$\times$[Conv2D+MaxPool+ReLU] (8$\to$16$\to$64$\to$64$\to$64), Flatten(320), FC(64)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Training}
+    \begin{columns}[c]
+        \begin{column}{.5\linewidth}
+            \centering
+            \fig[width=\linewidth]{q4_model1_loss}
+        \end{column}
+        \begin{column}{.5\linewidth}
+            \centering
+            \fig[width=\linewidth]{q4_model2_loss}
+        \end{column}
+    \end{columns}
+    \vfill
+    {\small Adam, categorical cross-entropy, \texttt{EarlyStopping} on validation loss (patience 3, best weights restored)}
+\end{frame}
+
+\begin{frame}{Evaluation}
+    \begin{columns}[c]
+        \begin{column}{.5\linewidth}
+            \centering
+            \fig[width=\linewidth]{q4_model1_confusion}
+        \end{column}
+        \begin{column}{.5\linewidth}
+            \centering
+            \fig[width=\linewidth]{q4_model2_confusion}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Comparison \& Conclusion}
+    \centering
+    \small
+    \begin{tabular}{lccccc}
+        \toprule
+        Model & Params & Inference & Accuracy & Precision & F1 \\
+        \midrule
+        Model 1 (custom)   & \good{27{,}874}  & 0.76\,ms & 0.985 & 0.985 & 0.985 \\
+        Model 2 (baseline) & 105{,}202 & 0.76\,ms & 0.985 & 0.985 & 0.985 \\
+        \bottomrule
+    \end{tabular}
+    \vfill
+    \begin{itemize}
+        \item Both models are close to perfect -- the two classes are visually very distinct in the scalograms
+        \item Model 1 reaches the \good{same accuracy with 3.8$\times$ fewer parameters}, mainly from GlobalAveragePooling instead of Flatten
+    \end{itemize}
+\end{frame}
+
+% =====================================================================================
+\section{Q6 -- Autoencoder}
+\makechapterpage{Q6 -- Autoencoder}{10 points}
+
+\begin{frame}{Objective \& Method}
+    \begin{itemize}
+        \item \good{Objective:} compress each scalogram to a latent vector and reconstruct it, for 10 random images per class
+        \item \good{Method:} dense autoencoder (matches the architecture shown in class)
+    \end{itemize}
+    \centering
+    \[
+        \underbrace{60\times175\times3}_{31{,}500}
+        \;\xrightarrow{\text{Dense}}\; 256
+        \;\xrightarrow{\text{Dense}}\; \underbrace{32}_{\text{latent } z}
+        \;\xrightarrow{\text{Dense}}\; 256
+        \;\xrightarrow{\text{Dense}}\; \underbrace{60\times175\times3}_{31{,}500}
+    \]
+    \begin{itemize}
+        \item Trained unsupervised: target = input itself, loss = MSE (reconstruction error)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Result -- Healthy (00\_15)}
+    \centering
+    \fig[width=.95\linewidth]{q6_healthy}
+\end{frame}
+
+\begin{frame}{Result -- Faulty (10\_15)}
+    \centering
+    \fig[width=.95\linewidth]{q6_faulty}
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \centering
+    \begin{tabular}{lc}
+        \toprule
+        Class & Mean reconstruction error (MSE) \\
+        \midrule
+        Healthy (00\_15) & \good{0.0022} \\
+        Faulty (10\_15)  & 0.0028 \\
+        \bottomrule
+    \end{tabular}
+    \vfill
+    \begin{itemize}
+        \item Both classes reconstruct well -- the 32-value latent vector preserves the overall band pattern
+        \item Faulty images have a slightly higher error: the periodic peak pattern carries more high-frequency detail than the smooth healthy band, making it harder to compress into 32 numbers
+    \end{itemize}
+\end{frame}
+
+\end{document}

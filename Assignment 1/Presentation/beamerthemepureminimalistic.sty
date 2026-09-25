@@ -1,0 +1,92 @@
+% A pure minimalistic LaTeX-Beamer theme for everyone to use.
+% Copyright (C) 2020 Kai Norman Clasen
+
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+% This file is part of beamerthemepureminimalistic.
+
+% If problems/bugs are found or enhancements are desired, please contact
+% me over: https://github.com/kai-tub/latex-beamer-pure-minimalistic
+
+\ProvidesPackage{beamerthemepureminimalistic}[v2.0.0]
+
+\mode<presentation>
+
+\DeclareOptionBeamer{darkmode}{\PassOptionsToPackage{darkmode}{beamercolorthemepureminimalistic}}
+\DeclareOptionBeamer{showmaxslides}{\PassOptionsToPackage{showmaxslides}{beamerouterthemepureminimalistic}}
+\DeclareOptionBeamer{nofooterlogo}{\PassOptionsToPackage{nofooterlogo}{beamerouterthemepureminimalistic}}
+\DeclareOptionBeamer{nofooter}{\PassOptionsToPackage{nofooter}{beamerouterthemepureminimalistic}}
+\DeclareOptionBeamer{customfont}{\PassOptionsToPackage{customfont}{beamerfontthemepureminimalistic}}
+\DeclareOptionBeamer{noto}{\PassOptionsToPackage{noto}{beamerfontthemepureminimalistic}}
+
+\ProcessOptionsBeamer
+
+% Settings
+\usefonttheme{pureminimalistic}
+\usecolortheme{pureminimalistic}
+\useoutertheme{pureminimalistic}
+\useinnertheme{pureminimalistic}
+
+\setbeamertemplate{navigation symbols}{}%
+\beamerdefaultoverlayspecification{}
+
+\def\maketitle{%
+	{%Set beamer template only works for the following frames.
+	% Would need a different way to support calling \maketitle in
+	% a frame environment
+		\setbeamertemplate{footline}{}%
+		\setbeamertemplate{frametitle}[largetitle]%
+		\begin{frame}[noframenumbering]%
+			\titlepage%
+		\end{frame}%
+	}
+}
+
+\def \makestartpage{
+  \begingroup
+  \setbeamercolor{background canvas}{bg=\beamerbgcolorstart} % Set background color to red
+  \begin{frame}[plain]
+    % Add your content here. For example, a title or an image.
+    \vfill
+    \vspace{5mm}
+    \centering
+    \logofrontpage\\
+
+    \vfill
+  \end{frame}
+  \endgroup
+}
+
+\newcommand{\makechapterpage}[2]{%
+
+  \begin{frame}[plain]
+\vspace{3cm}
+    \vfill
+    \centering
+    \LARGE{\textbf{\color{\beamertitlecolor}{#1}}}\\[1ex]
+    \small{\color{\beamertextcolor}{#2}}    
+    \vfill
+ %   \begin{tikzpicture}[]
+\vspace{2cm}
+
+    \flushleft{
+    \logochapter}
+  %  \end{tikzpicture}
+    
+  \end{frame}
+}
+
+
+
+\mode<all>
